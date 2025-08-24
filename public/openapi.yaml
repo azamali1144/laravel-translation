@@ -1,99 +1,436 @@
 openapi: 3.0.3
 info:
-  title: Translation API
+  title: Translation Management API
   version: 1.0.0
+  description: API for managing locales, translations, and tags.
 servers:
-  - url: http://your-domain.com/api/v1
+  - url: http://localhost:8000
+
+
 paths:
-  /locales:
+  /api/auth/register:
+    post:
+      summary: Register new user
+      tags: [ Auth ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                password_confirmation:
+                  type: string
+              required: [ name, email, password, password_confirmation ]
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  user:
+                    $ref: '#/components/schemas/User'
+                  token:
+                    type: string
+                  token_type:
+                    type: string
+                  expires_in:
+                    type: integer
+
+    /api/auth/login:
+      post:
+        summary: Login user
+        tags: [ Auth ]
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  email:
+                    type: string
+                    format: email
+                  password:
+                    type: string
+                required: [ email, password ]
+        responses:
+          '200':
+            description: Login successful
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/LoginResponse'
+
+  /api/v1/locales:
     get:
       summary: List locales
+      operationId: listLocales
       responses:
         '200':
           description: OK
-  /locales:
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        code:
+                          type: string
+                        name:
+                          type: string
+                        created_at:
+                          type: string
+                          format: date-time
+                        updated_at:
+                          type: string
+                          format: date-time
     post:
       summary: Create locale
+      operationId: createLocale
       security:
-        - BearerAuth: []
+        - apiAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - code
+                - name
+              properties:
+                code:
+                  type: string
+                name:
+                  type: string
       responses:
         '201':
           description: Created
-  /translations:
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Locale'
+  /api/v1/translations:
     get:
       summary: List translations
+      operationId: listTranslations
+      parameters:
+        - name: locale
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: key
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: per_page
+          in: query
+          required: false
+          schema:
+            type: integer
       responses:
         '200':
           description: OK
-    post:
-      summary: Create translation
-      security:
-        - BearerAuth: []
-      responses:
-        '201':
-          description: Created
-  /translations/{translation}:
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        key:
+                          type: string
+                        content:
+                          type: string
+                          nullable: true
+                        locale:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                            code:
+                              type: string
+                            name:
+                              type: string
+  /api/v1/translations/{translation}:
     get:
       summary: Get a translation
+      operationId: getTranslation
       parameters:
         - name: translation
           in: path
           required: true
           schema:
-            type: string
+            type: integer
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                      key:
+                        type: string
+                      content:
+                        type: string
+                        nullable: true
+                      locale:
+                        type: object
     put:
       summary: Update translation
+      operationId: updateTranslation
       security:
-        - BearerAuth: []
+        - apiAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                content:
+                  type: string
+                tags:
+                  type: array
+                  items:
+                    type: string
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                      key:
+                        type: string
+                      content:
+                        type: string
+                        nullable: true
+                      locale:
+                        type: object
     patch:
-      summary: Partial update translation
+      summary: Partially update translation
+      operationId: patchTranslation
       security:
-        - BearerAuth: []
+        - apiAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                content:
+                  type: string
+                tags:
+                  type: array
+                  items:
+                    type: string
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                      key:
+                        type: string
+                      content:
+                        type: string
+                        nullable: true
+                      locale:
+                        type: object
     delete:
       summary: Delete translation
+      operationId: deleteTranslation
       security:
-        - BearerAuth: []
+        - apiAuth: []
       responses:
         '204':
           description: No Content
-  /translations/search:
+  /api/v1/translations/search:
     get:
       summary: Search translations
-      security:
-        - BearerAuth: []
+      operationId: searchTranslations
       parameters:
-        - in: query
-          name: q
+        - name: q
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: tags
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: per_page
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        key:
+                          type: string
+                        content:
+                          type: string
+                          nullable: true
+                        locale:
+                          type: object
+  /api/v1/translations/export:
+    get:
+      summary: Export translations (filtered)
+      operationId: exportTranslations
+      parameters:
+        - name: locale
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: tags
+          in: query
+          required: false
           schema:
             type: string
       responses:
         '200':
-          description: OK
-  /translations/export:
+          description: Streamed JSON
+          content:
+            application/json:
+              schema:
+                type: string
+  /api/v1/translations/export-all:
     get:
-      summary: Export translations
+      summary: Export all translations for all locales
+      operationId: exportAllTranslations
       responses:
         '200':
-          description: OK
-  /translations/export-all:
-    get:
-      summary: Export all translations
-      responses:
-        '200':
-          description: OK
+          description: Streamed JSON
+          content:
+            application/json:
+              schema:
+                type: string
 
 components:
   securitySchemes:
-    BearerAuth:
+    apiAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    Locale:
+      type: object
+      properties:
+        id:
+          type: integer
+        code:
+          type: string
+        name:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    Translation:
+      type: object
+      properties:
+        id:
+          type: integer
+        key:
+          type: string
+        content:
+          type: string
+          nullable: true
+        locale:
+          $ref: '#/components/schemas/Locale'
+
+    LoginResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        user:
+          $ref: '#/components/schemas/User'
+        token:
+          type: string
+        token_type:
+          type: string
+        expires_in:
+          type: integer

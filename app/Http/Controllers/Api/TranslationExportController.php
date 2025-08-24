@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Repositories\Contract\TranslationExportServiceInterface;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class TranslationExportController extends Controller
 {
@@ -18,6 +19,7 @@ class TranslationExportController extends Controller
     // Simple export: latest payload per key for a locale, with optional tag filtering
     public function export(Request $request)
     {
+
         return $this->service->exportTranslations($request);
     }
 

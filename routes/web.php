@@ -7,6 +7,18 @@ use App\Http\Controllers\Api\LocaleController;
 use App\Http\Controllers\Api\TranslationController;
 use App\Http\Controllers\Api\TranslationExportController;
 
+Route::prefix('api/auth')->group(function () {
+    Route::post('login', [AuthController::class, 'login']);
+    Route::post('register', [AuthController::class, 'register']);
+
+    // Protected routes
+    Route::middleware('jwt.auth')->group(function () {
+        Route::post('logout', [AuthController::class, 'logout']);
+        Route::post('refresh', [AuthController::class, 'refresh']);
+        Route::get('me', [AuthController::class, 'me']);
+    });
+});
+
 Route::prefix('api/v1')->group(function () {
     Route::get('/locales', [LocaleController::class, 'index']);
     Route::post('/locales', [LocaleController::class, 'store'])->middleware(['auth.api']);

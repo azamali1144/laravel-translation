@@ -53,8 +53,9 @@ class Kernel extends HttpKernel
      */
     protected $routeMiddleware = [
         'auth' => \App\Http\Middleware\Authenticate::class,
-        // add your custom tokens middleware if needed
         'auth.api' => \App\Http\Middleware\EnsureApiToken::class,
+        'jwt.auth' => \App\Http\Middleware\JwtMiddleware::class,
+        'jwt.refresh' => \Tymon\JWTAuth\Middleware\RefreshToken::class,
     ];
 
     protected $commands = [
