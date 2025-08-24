@@ -98,7 +98,6 @@ return [
     'cipher' => 'AES-256-CBC',
 
     'key' => env('APP_KEY'),
-
     'previous_keys' => [
         ...array_filter(
             explode(',', (string) env('APP_PREVIOUS_KEYS', ''))
@@ -123,4 +122,10 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+
+    // config/app.php (excerpt)
+    'api_tokens' => [
+        'test-token-123' => true,
+        'prod-token-abc' => true,
+    ],
 ];

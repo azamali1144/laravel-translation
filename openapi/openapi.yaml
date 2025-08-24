@@ -1,0 +1,94 @@
+openapi: 3.0.3
+info:
+  title: Translation Management API
+  version: 1.0.0
+  description: API for managing locales, translations, and tags.
+servers:
+  - url: http://localhost:8000
+paths:
+  /api/v1/locales:
+    get:
+      summary: List locales
+      operationId: listLocales
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        code:
+                          type: string
+                        name:
+                          type: string
+                        created_at:
+                          type: string
+                          format: date-time
+                        updated_at:
+                          type: string
+                          format: date-time
+  /api/v1/translations:
+    get:
+      summary: List translations
+      operationId: listTranslations
+      parameters:
+        - name: locale
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: key
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id: { type: integer }
+                        key: { type: string }
+                        content: { type: string, nullable: true }
+                        locale: { type: object }
+  /api/v1/translations/export:
+    get:
+      summary: Export translations (filtered)
+      operationId: exportTranslations
+      parameters:
+        - name: locale
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: tags
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Streamed JSON
+  /api/v1/translations/export-all:
+    get:
+      summary: Export all translations for all locales
+      operationId: exportAllTranslations
+      responses:
+        '200':
+          description: Streamed JSON
