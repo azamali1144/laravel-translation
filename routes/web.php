@@ -1,5 +1,7 @@
 <?php
 
+use Illuminate\Support\Facades\Storage;
+
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\LocaleController;
 use App\Http\Controllers\Api\TranslationController;
@@ -20,3 +22,23 @@ Route::prefix('api/v1')->group(function () {
     Route::get('/translations/export', [TranslationExportController::class, 'export']);
     Route::get('/translations/export-all', [TranslationExportController::class, 'exportAll']);
 });
+
+Route::get('/openapi.yaml', function () {
+    $path = public_path('openapi.yaml');
+    if (!file_exists($path)) abort(404);
+
+    return response()->file($path, [
+        'Content-Type' => 'application/x-yaml',
+        'Access-Control-Allow-Origin' => '*', // or your frontend origin
+    ]);
+});
+
+Route::get('/swagger', function () {
+    return redirect('/index.html');
+});
+
+
+Route::get('/docs', function () {
+    return view('docs'); // if you created resources/views/docs.blade.php
+});
+

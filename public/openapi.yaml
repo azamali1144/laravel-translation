@@ -1,0 +1,99 @@
+openapi: 3.0.3
+info:
+  title: Translation API
+  version: 1.0.0
+servers:
+  - url: http://your-domain.com/api/v1
+paths:
+  /locales:
+    get:
+      summary: List locales
+      responses:
+        '200':
+          description: OK
+  /locales:
+    post:
+      summary: Create locale
+      security:
+        - BearerAuth: []
+      responses:
+        '201':
+          description: Created
+  /translations:
+    get:
+      summary: List translations
+      responses:
+        '200':
+          description: OK
+    post:
+      summary: Create translation
+      security:
+        - BearerAuth: []
+      responses:
+        '201':
+          description: Created
+  /translations/{translation}:
+    get:
+      summary: Get a translation
+      parameters:
+        - name: translation
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+    put:
+      summary: Update translation
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: OK
+    patch:
+      summary: Partial update translation
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: OK
+    delete:
+      summary: Delete translation
+      security:
+        - BearerAuth: []
+      responses:
+        '204':
+          description: No Content
+  /translations/search:
+    get:
+      summary: Search translations
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: q
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+  /translations/export:
+    get:
+      summary: Export translations
+      responses:
+        '200':
+          description: OK
+  /translations/export-all:
+    get:
+      summary: Export all translations
+      responses:
+        '200':
+          description: OK
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

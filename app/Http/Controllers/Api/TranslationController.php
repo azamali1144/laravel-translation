@@ -3,14 +3,18 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Locale;
-use App\Models\Translation;
-use App\Models\Tag;
+use App\Repositories\Contract\TranslationServiceInterface;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class TranslationController extends Controller
 {
+    protected TranslationServiceInterface $service;
+
+    public function __construct(TranslationServiceInterface $service)
+    {
+        $this->service = $service;
+    }
+
     // Create or upsert by locale_code + key
     public function store(Request $request)
     {
@@ -22,120 +26,67 @@ class TranslationController extends Controller
             'tags.*' => 'string',
         ]);
 
-        $locale = Locale::whereCode($validated['locale_code'])->firstOrFail();
+        $trans = $this->service->store(
+            $validated['locale_code'],
+            $validated['key'],
+            $validated['content'] ?? null,
+            $validated['tags'] ?? []
+        );
 
-        // Transactional upsert with tag sync
-        DB::transaction(function() use ($locale, $validated) {
-            $trans = Translation::firstOrCreate(
-                ['locale_id' => $locale->id, 'key' => $validated['key']],
-                ['content' => $validated['content'] ?? null]
-            );
-
-            if (isset($validated['content'])) {
-                $trans->content = $validated['content'];
-                $trans->save();
-            }
-
-            if (!empty($validated['tags'])) {
-                $tagIds = [];
-                foreach ($validated['tags'] as $name) {
-                    $tag = Tag::firstOrCreate(['name' => strtolower(trim($name))]);
-                    $tagIds[] = $tag->id;
-                }
-                $trans->tags()->sync($tagIds);
-            }
-        });
-
-        return response()->json(['data' => Translation::with(['tags', 'locale'])->findOrFail(
-            Translation::whereLocaleId($locale->id)->where('key', $validated['key'])->value('id')
-        )]);
+        return response()->json(['data' => $trans]);
     }
 
     public function index(Request $request)
     {
-        $query = Translation::with(['tags', 'locale'])->query();
+        $filters = [
+            'locale' => $request->query('locale'),
+            'key' => $request->query('key'),
+            'content' => $request->query('content'),
+            'tags' => $request->query('tags'),
+        ];
+        $perPage = (int) $request->get('per_page', 25);
 
-        if ($localeCode = $request->query('locale')) {
-            $locale = Locale::whereCode($localeCode)->first();
-            if ($locale) {
-                $query->where('locale_id', $locale->id);
-            }
-        }
+        $translations = $this->service->list($filters, $perPage);
 
-        if ($request->filled('key')) {
-            $query->where('key', 'like', '%' . $request->query('key') . '%');
-        }
-
-        if ($request->filled('content')) {
-            $query->where('content', 'like', '%' . $request->query('content') . '%');
-        }
-
-        if ($request->filled('tags')) {
-            $tags = explode(',', $request->query('tags'));
-            $query->whereHas('tags', function($q) use ($tags){
-                $q->whereIn('name', $tags);
-            });
-        }
-
-        return response()->json(['data' => $query->paginate($request->get('per_page', 25))]);
+        return response()->json(['data' => $translations]);
     }
 
     public function show($id)
     {
-        $trans = Translation::with(['tags', 'locale'])->findOrFail($id);
+        $trans = $this->service->show((int) $id);
         return response()->json(['data' => $trans]);
     }
 
     public function update(Request $request, $id)
     {
-        $trans = Translation::findOrFail($id);
         $validated = $request->validate([
             'content' => 'nullable|string',
             'tags' => 'array',
             'tags.*' => 'string',
         ]);
 
-        if (isset($validated['content'])) {
-            $trans->content = $validated['content'];
-        }
+        $trans = $this->service->update((int) $id, $validated['content'] ?? null, $validated['tags'] ?? null);
 
-        if (isset($validated['tags'])) {
-            $tagIds = Tag::firstOrCreateTags($validated['tags']);
-            $trans->tags()->sync($tagIds);
-        }
-
-        $trans->save();
-
-        return response()->json(['data' => $trans->load('tags', 'locale')]);
+        return response()->json(['data' => $trans]);
     }
 
     public function destroy($id)
     {
-        $trans = Translation::findOrFail($id);
-        $trans->delete();
+        $this->service->destroy((int) $id);
         return response()->json(['data' => null], 204);
     }
 
     // Optional: search endpoint
     public function search(Request $request)
     {
-        $query = Translation::with(['tags', 'locale'])->query();
+        $filters = [
+            'q' => $request->query('q'),
+            'tags' => $request->query('tags'),
+        ];
+        $perPage = (int) $request->get('per_page', 25);
 
-        if ($request->filled('q')) {
-            $q = $request->query('q');
-            $query->where(function($qq) use ($q){
-                $qq->where('key', 'like', "%$q%")
-                   ->orWhere('content', 'like', "%$q%");
-            });
-        }
+        $results = $this->service->search($filters, $perPage);
 
-        if ($request->filled('tags')) {
-            $tags = explode(',', $request->query('tags'));
-            $query->whereHas('tags', function($qq) use ($tags){
-                $qq->whereIn('name', $tags);
-            });
-        }
-
-        return response()->json(['data' => $query->paginate($request->get('per_page', 25))]);
+        return response()->json(['data' => $results]);
     }
 }

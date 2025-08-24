@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8"/>
+    <title>API Documentation</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Redoc CDN -->
+    <script src="https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.min.js"></script>
+  </head>
+  <body>
+    <redoc spec-url="{{ url('/openapi.yaml') }}"></redoc>
+  </body>
+</html>
